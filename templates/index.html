@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wind Chill Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        form { margin: 20px auto; width: 300px; }
+        input { padding: 10px; margin: 5px; width: 100%; }
+        button { padding: 10px; width: 100%; background-color: blue; color: white; border: none; }
+        p { font-size: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Wind Chill Calculator</h2>
+    <form method="POST">
+        <input type="text" name="temperature" placeholder="Enter Temperature (°F)" required>
+        <input type="text" name="wind_speed" placeholder="Enter Wind Speed (mph)" required>
+        <button type="submit">Calculate</button>
+    </form>
+    {% if wind_chill is not none %}
+        <p>Wind Chill: {{ wind_chill }}°F</p>
+    {% endif %}
+</body>
+</html>
+
