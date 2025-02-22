@@ -85,5 +85,14 @@
             });
         }
     </script>
+
+    <script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/static/service-worker.js")
+      .then((reg) => console.log("Service Worker Registered:", reg))
+      .catch((err) => console.log("Service Worker Error:", err));
+  }
+</script>
+
 </body>
 </html>
