@@ -50,11 +50,11 @@
   <div class="container">
     <h2>Wind Chill Calculator</h2>
     <form method="POST">
-      <label>Temperature (°F): <span id="tempValue">32</span></label>
-      <input type="range" name="temperature" min="-50" max="100" value="32"
+      <label>Temperature (°F): <span id="tempValue">{{ input_temperature }}</span></label>
+      <input type="range" name="temperature" min="-50" max="100" value="{{ input_temperature }}" 
              oninput="document.getElementById('tempValue').innerText = this.value">
-      <label>Wind Speed (mph): <span id="windValue">5</span></label>
-      <input type="range" name="wind_speed" min="0" max="60" value="5"
+      <label>Wind Speed (mph): <span id="windValue">{{ input_wind_speed }}</span></label>
+      <input type="range" name="wind_speed" min="0" max="60" value="{{ input_wind_speed }}" 
              oninput="document.getElementById('windValue').innerText = this.value">
       <button type="submit">Calculate</button>
       <button type="button" class="clear-btn" onclick="clearFields()">Clear</button>
@@ -71,20 +71,25 @@
   </div>
 
   <script>
-    // Clear input fields and result displays
+    // Clear input fields and result displays, resetting to defaults (32°F and 5 mph)
     function clearFields() {
       document.querySelector('input[name="temperature"]').value = 32;
       document.querySelector('input[name="wind_speed"]').value = 5;
       document.getElementById('tempValue').innerText = "32";
       document.getElementById('windValue').innerText = "5";
+      
       let result = document.getElementById("result");
       if (result) result.innerText = "";
+      
       let frostbiteWarning = document.getElementById("frostbite-warning");
       if (frostbiteWarning) frostbiteWarning.style.display = "none";
+      
       let frostbiteTime = document.getElementById("frostbite-time");
       if (frostbiteTime) frostbiteTime.style.display = "none";
+      
       let clothingAdvice = document.getElementById("clothing-advice");
       if (clothingAdvice) clothingAdvice.style.display = "none";
+      
       let convertedTemp = document.getElementById("converted-temp");
       if (convertedTemp) convertedTemp.innerText = "";
     }
@@ -93,7 +98,6 @@
     let isFahrenheit = true;
     function toggleUnits() {
       let resultText = document.getElementById("result").innerText;
-      // Extract numeric value from result text (e.g., "Wind Chill: 17.1°F")
       let windChillValue = parseFloat(resultText.split(":")[1]);
       if (isFahrenheit) {
         let converted = ((windChillValue - 32) * 5/9).toFixed(2);
