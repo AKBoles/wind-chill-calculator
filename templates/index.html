@@ -60,39 +60,48 @@
             <button type="button" class="clear-btn" onclick="clearFields()">Clear</button>
         </form>
 
-        {% if wind_chill_f is not none %}
-            <p id="result">Wind Chill: {{ wind_chill_f }}°F / {{ wind_chill_c }}°C</p>
-            <button onclick="shareResult()">Share</button>
-        {% endif %}
+        <p id="result"></p>
+        <p id="frostbite-warning" style="font-weight: bold; color: red; display: none;"></p>
+        <p id="frostbite-time" style="font-weight: bold; color: black; display: none;"></p>
+
+        <script>
+            function checkFrostbiteRisk(windChill) {
+                let warningText = "";
+                let timeText = "";
+                let warningColor = "red";
+
+                if (windChill <= -40) {
+                    warningText = "❄️ Extreme Frostbite Risk: Skin can freeze in under 5 minutes!";
+                    timeText = "Estimated time to frostbite: Less than 5 minutes.";
+                } else if (windChill <= -20) {
+                    warningText = "⚠️ Severe Frostbite Risk: Skin can freeze in 10-15 minutes!";
+                    timeText = "Estimated time to frostbite: 10-15 minutes.";
+                } else if (windChill <= -10) {
+                    warningText = "❄️ Frostbite Warning: Skin can freeze in about 30 minutes.";
+                    timeText = "Estimated time to frostbite: ~30 minutes.";
+                    warningColor = "orange";
+                } else if (windChill <= 0) {
+                    warningText = "⚠️ Frostbite Possible: Prolonged exposure may cause frostbite.";
+                    timeText = "Estimated time to frostbite: 1 hour or more.";
+                    warningColor = "yellow";
+                }
+
+                let warningElement = document.getElementById("frostbite-warning");
+                let timeElement = document.getElementById("frostbite-time");
+
+                if (warningText) {
+                    warningElement.innerText = warningText;
+                    warningElement.style.color = warningColor;
+                    warningElement.style.display = "block";
+
+                    timeElement.innerText = timeText;
+                    timeElement.style.display = "block";
+                } else {
+                    warningElement.style.display = "none";
+                    timeElement.style.display = "none";
+                }
+            }
+        </script>
     </div>
-
-    <script>
-        function clearFields() {
-            document.querySelector('input[name="temperature"]').value = 32;
-            document.querySelector('input[name="wind_speed"]').value = 5;
-            document.getElementById("tempValue").innerText = "32";
-            document.getElementById("windValue").innerText = "5";
-            document.getElementById("result")?.remove();
-        }
-
-        function shareResult() {
-            let temp = document.querySelector('input[name="temperature"]').value;
-            let wind = document.querySelector('input[name="wind_speed"]').value;
-            let resultText = document.getElementById("result").innerText;
-            let text = `Wind Chill for ${temp}°F and ${wind} mph: ${resultText}`;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Copied to clipboard! Share it anywhere.");
-            });
-        }
-    </script>
-
-    <script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/static/service-worker.js")
-      .then((reg) => console.log("Service Worker Registered:", reg))
-      .catch((err) => console.log("Service Worker Error:", err));
-  }
-</script>
-
 </body>
 </html>
