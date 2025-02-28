@@ -1,107 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wind Chill Calculator</title>
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f4f4f4;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            width: 320px;
-        }
-        h2 { margin-bottom: 15px; }
-        form { display: flex; flex-direction: column; align-items: center; }
-        label { font-size: 14px; font-weight: bold; margin: 10px 0 5px; }
-        input[type="range"] { width: 100%; }
-        button {
-            padding: 12px;
-            width: 100%;
-            background-color: #4676a3;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            margin-top: 10px;
-        }
-        button:hover { background-color: #365a82; }
-        .clear-btn { background-color: #b0b0b0; }
-        .clear-btn:hover { background-color: #888888; }
-        p { font-size: 18px; font-weight: bold; margin-top: 10px; color: #333; }
-        @media (max-width: 500px) { .container { width: 90%; padding: 15px; } }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wind Chill Calculator</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      width: 320px;
+    }
+    h2 { margin-bottom: 15px; }
+    form { display: flex; flex-direction: column; align-items: center; }
+    label { font-size: 14px; font-weight: bold; margin: 10px 0 5px; }
+    input[type="range"] { width: 100%; }
+    button {
+      padding: 12px;
+      width: 100%;
+      background-color: #4676a3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin-top: 10px;
+    }
+    button:hover { background-color: #365a82; }
+    .clear-btn { background-color: #b0b0b0; }
+    .clear-btn:hover { background-color: #888888; }
+    p { font-size: 18px; font-weight: bold; margin-top: 10px; color: #333; }
+    @media (max-width: 500px) { .container { width: 90%; padding: 15px; } }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Wind Chill Calculator</h2>
-        <form method="POST">
-            <label>Temperature (°F): <span id="tempValue">32</span></label>
-            <input type="range" name="temperature" min="-50" max="100" value="32" oninput="tempValue.innerText = this.value">
+  <div class="container">
+    <h2>Wind Chill Calculator</h2>
+    <form method="POST">
+      <label>Temperature (°F): <span id="tempValue">32</span></label>
+      <input type="range" name="temperature" min="-50" max="100" value="32"
+             oninput="document.getElementById('tempValue').innerText = this.value">
+      <label>Wind Speed (mph): <span id="windValue">5</span></label>
+      <input type="range" name="wind_speed" min="0" max="60" value="5"
+             oninput="document.getElementById('windValue').innerText = this.value">
+      <button type="submit">Calculate</button>
+      <button type="button" class="clear-btn" onclick="clearFields()">Clear</button>
+    </form>
 
-            <label>Wind Speed (mph): <span id="windValue">5</span></label>
-            <input type="range" name="wind_speed" min="0" max="60" value="5" oninput="windValue.innerText = this.value">
+    {% if wind_chill_f is not none %}
+      <p id="result">Wind Chill: {{ wind_chill_f }}°F</p>
+      <p id="frostbite-warning" style="font-weight: bold; color: red;">{{ frostbite_warning }}</p>
+      <p id="frostbite-time" style="font-weight: bold; color: black;">{{ frostbite_time }}</p>
+      <p id="clothing-advice" style="font-weight: bold;">{{ clothing_advice }}</p>
+      <button onclick="toggleUnits()">Switch to °C</button>
+      <p id="converted-temp"></p>
+    {% endif %}
+  </div>
 
-            <button type="submit">Calculate</button>
-            <button type="button" class="clear-btn" onclick="clearFields()">Clear</button>
-        </form>
-
-        <p id="result"></p>
-        <p id="frostbite-warning" style="font-weight: bold; color: red; display: none;"></p>
-        <p id="frostbite-time" style="font-weight: bold; color: black; display: none;"></p>
-
-        <script>
-            function checkFrostbiteRisk(windChill) {
-                let warningText = "";
-                let timeText = "";
-                let warningColor = "red";
-
-                if (windChill <= -40) {
-                    warningText = "❄️ Extreme Frostbite Risk: Skin can freeze in under 5 minutes!";
-                    timeText = "Estimated time to frostbite: Less than 5 minutes.";
-                } else if (windChill <= -20) {
-                    warningText = "⚠️ Severe Frostbite Risk: Skin can freeze in 10-15 minutes!";
-                    timeText = "Estimated time to frostbite: 10-15 minutes.";
-                } else if (windChill <= -10) {
-                    warningText = "❄️ Frostbite Warning: Skin can freeze in about 30 minutes.";
-                    timeText = "Estimated time to frostbite: ~30 minutes.";
-                    warningColor = "orange";
-                } else if (windChill <= 0) {
-                    warningText = "⚠️ Frostbite Possible: Prolonged exposure may cause frostbite.";
-                    timeText = "Estimated time to frostbite: 1 hour or more.";
-                    warningColor = "yellow";
-                }
-
-                let warningElement = document.getElementById("frostbite-warning");
-                let timeElement = document.getElementById("frostbite-time");
-
-                if (warningText) {
-                    warningElement.innerText = warningText;
-                    warningElement.style.color = warningColor;
-                    warningElement.style.display = "block";
-
-                    timeElement.innerText = timeText;
-                    timeElement.style.display = "block";
-                } else {
-                    warningElement.style.display = "none";
-                    timeElement.style.display = "none";
-                }
-            }
-        </script>
-    </div>
+  <script>
+    // Clear input fields and result displays
+    function clearFields() {
+      document.querySelector('input[name="temperature"]').value = 32;
+      document.querySelector('input[name="wind_speed"]').value = 5;
+      document.getElementById('tempValue').innerText = "32";
+      document.getElementById('windValue').innerText = "5";
+      let result = document.getElementById("result");
+      if (result) result.innerText = "";
+      let frostbiteWarning = document.getElementById("frostbite-warning");
+      if (frostbiteWarning) frostbiteWarning.style.display = "none";
+      let frostbiteTime = document.getElementById("frostbite-time");
+      if (frostbiteTime) frostbiteTime.style.display = "none";
+      let clothingAdvice = document.getElementById("clothing-advice");
+      if (clothingAdvice) clothingAdvice.style.display = "none";
+      let convertedTemp = document.getElementById("converted-temp");
+      if (convertedTemp) convertedTemp.innerText = "";
+    }
+    
+    // Toggle between Fahrenheit and Celsius
+    let isFahrenheit = true;
+    function toggleUnits() {
+      let resultText = document.getElementById("result").innerText;
+      // Extract numeric value from result text (e.g., "Wind Chill: 17.1°F")
+      let windChillValue = parseFloat(resultText.split(":")[1]);
+      if (isFahrenheit) {
+        let converted = ((windChillValue - 32) * 5/9).toFixed(2);
+        document.getElementById("converted-temp").innerText = `🌡 Wind Chill: ${converted}°C`;
+        isFahrenheit = false;
+      } else {
+        document.getElementById("converted-temp").innerText = "";
+        isFahrenheit = true;
+      }
+    }
+    
+    // Frostbite timer functions
+    let frostbiteInterval;
+    function startFrostbiteTimer(minutes) {
+      let timeRemaining = minutes * 60;
+      let timerElement = document.getElementById("frostbite-timer");
+      if (!timerElement) {
+        timerElement = document.createElement("p");
+        timerElement.id = "frostbite-timer";
+        timerElement.style.fontSize = "20px";
+        timerElement.style.fontWeight = "bold";
+        timerElement.style.color = "red";
+        document.querySelector('.container').appendChild(timerElement);
+      }
+      clearInterval(frostbiteInterval);
+      timerElement.style.display = "block";
+      frostbiteInterval = setInterval(() => {
+        let minutesLeft = Math.floor(timeRemaining / 60);
+        let secondsLeft = timeRemaining % 60;
+        timerElement.innerText = `🕒 Time to frostbite: ${minutesLeft} min ${secondsLeft} sec`;
+        if (timeRemaining <= 0) {
+          clearInterval(frostbiteInterval);
+          timerElement.innerText = "⚠️ Frostbite may have already started!";
+        }
+        timeRemaining--;
+      }, 1000);
+    }
+    
+    // On page load, if wind chill result is present, start the frostbite timer if applicable.
+    document.addEventListener("DOMContentLoaded", function() {
+      {% if wind_chill_f is not none and wind_chill_f is number %}
+        let windChill = {{ wind_chill_f }};
+        let timerMinutes = 0;
+        if (windChill <= -40) {
+          timerMinutes = 5;
+        } else if (windChill <= -20) {
+          timerMinutes = 15;
+        } else if (windChill <= -10) {
+          timerMinutes = 30;
+        } else if (windChill <= 0) {
+          timerMinutes = 60;
+        }
+        if (timerMinutes > 0) {
+          startFrostbiteTimer(timerMinutes);
+        }
+      {% endif %}
+    });
+  </script>
 </body>
 </html>
