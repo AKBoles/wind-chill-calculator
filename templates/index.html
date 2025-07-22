@@ -1,98 +1,662 @@
-const CACHE_NAME = "weather-utility-pro-v2";
-const urlsToCache = [
-  "/",
-  "/static/manifest.json",
-  "/static/service-worker.js",
-  "/static/icons/icon-192.png",
-  "/static/icons/icon-512.png"
-];
-
-// Install the service worker and cache resources
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log("Caching app shell");
-      return cache.addAll(urlsToCache);
-    })
-  );
-  // Force the waiting service worker to become the active service worker
-  self.skipWaiting();
-});
-
-// Fetch files from the cache first, then network
-self.addEventListener("fetch", (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Return cached version or fetch from network
-      if (response) {
-        return response;
-      }
-      
-      return fetch(event.request).then((response) => {
-        // Don't cache non-successful responses
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Utility Pro - Offline Weather Tools</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        // Clone the response as it can only be consumed once
-        const responseToCache = response.clone();
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
 
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card h2 {
+            color: #2563eb;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .value-display {
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #1d4ed8;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            border: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        button.secondary {
+            background: #6b7280;
+        }
+
+        button.secondary:hover {
+            background: #4b5563;
+        }
+
+        .toggle-button {
+            background: #10b981;
+        }
+
+        .toggle-button:hover {
+            background: #059669;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .result-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2563eb;
+            margin: 10px 0;
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .safety-alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .safety-safe { background: #dcfce7; color: #166534; border-left: 4px solid #22c55e; }
+        .safety-caution { background: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b; }
+        .safety-warning { background: #fed7aa; color: #c2410c; border-left: 4px solid #f97316; }
+        .safety-danger { background: #fecaca; color: #dc2626; border-left: 4px solid #ef4444; }
+        .safety-extreme { background: #f3e8ff; color: #7c3aed; border-left: 4px solid #8b5cf6; }
+
+        .clothing-advice {
+            background: #f0f9ff;
+            border: 2px solid #bae6fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .clothing-primary {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #0369a1;
+            margin-bottom: 15px;
+        }
+
+        .clothing-details {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+        }
+
+        .clothing-details li {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 3px solid #2563eb;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        .error {
+            background: #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌤️ Weather Utility Pro</h1>
+            <p>Comprehensive offline weather calculations and safety tools</p>
+        </div>
+
+        <div class="card">
+            <h2><span class="icon">🌡️</span> Weather Input</h2>
+            
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>
+                        Temperature
+                        <span class="value-display" id="tempValue">70°F</span>
+                    </label>
+                    <input type="range" id="temperature" min="-50" max="120" value="70" 
+                           oninput="updateValue('temperature', this.value)">
+                </div>
+
+                <div class="input-group">
+                    <label>
+                        Humidity
+                        <span class="value-display" id="humidityValue">50%</span>
+                    </label>
+                    <input type="range" id="humidity" min="0" max="100" value="50" 
+                           oninput="updateValue('humidity', this.value)">
+                </div>
+
+                <div class="input-group">
+                    <label>
+                        Wind Speed
+                        <span class="value-display" id="windValue">5 mph</span>
+                    </label>
+                    <input type="range" id="windSpeed" min="0" max="100" value="5" 
+                           oninput="updateValue('windSpeed', this.value)">
+                </div>
+
+                <div class="input-group">
+                    <label>
+                        Pressure
+                        <span class="value-display" id="pressureValue">1013 mb</span>
+                    </label>
+                    <input type="range" id="pressure" min="950" max="1050" value="1013" 
+                           oninput="updateValue('pressure', this.value)">
+                </div>
+
+                <div class="input-group">
+                    <label>
+                        Hour of Day
+                        <span class="value-display" id="hourValue">12</span>
+                    </label>
+                    <input type="range" id="hour" min="0" max="23" value="12" 
+                           oninput="updateValue('hour', this.value)">
+                </div>
+
+                <div class="input-group">
+                    <label>
+                        Month
+                        <span class="value-display" id="monthValue">June</span>
+                    </label>
+                    <input type="range" id="month" min="1" max="12" value="6" 
+                           oninput="updateValue('month', this.value)">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button onclick="calculateWeather()">
+                    <span>🧮</span> Calculate Weather
+                </button>
+                <button class="secondary" onclick="clearInputs()">
+                    <span>🗑️</span> Clear
+                </button>
+                <button class="toggle-button" onclick="toggleUnits()">
+                    <span>🔄</span> <span id="unitsButton">Switch to Metric</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="results" class="hidden">
+            <div class="card">
+                <h2><span class="icon">📊</span> Weather Calculations</h2>
+                <div class="results-grid" id="calculationsGrid">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">⚠️</span> Safety Alerts</h2>
+                <div id="safetyAlerts">
+                    <!-- Safety alerts will be populated here -->
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">👕</span> Clothing Recommendations</h2>
+                <div id="clothingAdvice">
+                    <!-- Clothing advice will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="card loading hidden">
+            <p>🔄 Calculating weather data...</p>
+        </div>
+
+        <div id="error" class="card error hidden">
+            <!-- Error messages will appear here -->
+        </div>
+    </div>
+
+    <script>
+        let currentUnits = 'imperial';
+        
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        function updateValue(inputId, value) {
+            const displays = {
+                'temperature': () => `${value}°${currentUnits === 'imperial' ? 'F' : 'C'}`,
+                'humidity': () => `${value}%`,
+                'windSpeed': () => `${value} ${currentUnits === 'imperial' ? 'mph' : 'km/h'}`,
+                'pressure': () => `${value} ${currentUnits === 'imperial' ? 'mb' : 'hPa'}`,
+                'hour': () => value,
+                'month': () => months[parseInt(value) - 1]
+            };
+            
+            document.getElementById(inputId + 'Value').textContent = displays[inputId]();
+        }
+
+        function toggleUnits() {
+            const tempSlider = document.getElementById('temperature');
+            const windSlider = document.getElementById('windSpeed');
+            const button = document.getElementById('unitsButton');
+            
+            if (currentUnits === 'imperial') {
+                // Convert to metric
+                currentUnits = 'metric';
+                button.textContent = 'Switch to Imperial';
+                
+                // Convert temperature range from F to C
+                const tempF = parseInt(tempSlider.value);
+                const tempC = Math.round((tempF - 32) * 5/9);
+                tempSlider.min = '-45';
+                tempSlider.max = '50';
+                tempSlider.value = tempC;
+                
+                // Convert wind speed from mph to km/h
+                const windMph = parseInt(windSlider.value);
+                const windKmh = Math.round(windMph * 1.60934);
+                windSlider.max = '160';
+                windSlider.value = windKmh;
+                
+            } else {
+                // Convert to imperial
+                currentUnits = 'imperial';
+                button.textContent = 'Switch to Metric';
+                
+                // Convert temperature range from C to F
+                const tempC = parseInt(tempSlider.value);
+                const tempF = Math.round((tempC * 9/5) + 32);
+                tempSlider.min = '-50';
+                tempSlider.max = '120';
+                tempSlider.value = tempF;
+                
+                // Convert wind speed from km/h to mph
+                const windKmh = parseInt(windSlider.value);
+                const windMph = Math.round(windKmh / 1.60934);
+                windSlider.max = '100';
+                windSlider.value = windMph;
+            }
+            
+            // Update all display values
+            updateValue('temperature', tempSlider.value);
+            updateValue('windSpeed', windSlider.value);
+            updateValue('pressure', document.getElementById('pressure').value);
+        }
+
+        function clearInputs() {
+            if (currentUnits === 'imperial') {
+                document.getElementById('temperature').value = 70;
+                document.getElementById('windSpeed').value = 5;
+            } else {
+                document.getElementById('temperature').value = 21;
+                document.getElementById('windSpeed').value = 8;
+            }
+            
+            document.getElementById('humidity').value = 50;
+            document.getElementById('pressure').value = 1013;
+            document.getElementById('hour').value = 12;
+            document.getElementById('month').value = 6;
+            
+            // Update all displays
+            ['temperature', 'humidity', 'windSpeed', 'pressure', 'hour', 'month'].forEach(id => {
+                updateValue(id, document.getElementById(id).value);
+            });
+            
+            // Hide results
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        async function calculateWeather() {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const error = document.getElementById('error');
+            
+            // Show loading
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+            error.classList.add('hidden');
+            
+            try {
+                let temperature = parseFloat(document.getElementById('temperature').value);
+                
+                // Convert to Fahrenheit if currently in Celsius
+                if (currentUnits === 'metric') {
+                    temperature = (temperature * 9/5) + 32;
+                }
+                
+                let windSpeed = parseFloat(document.getElementById('windSpeed').value);
+                
+                // Convert to mph if currently in km/h
+                if (currentUnits === 'metric') {
+                    windSpeed = windSpeed / 1.60934;
+                }
+                
+                const data = {
+                    temperature: temperature,
+                    humidity: parseFloat(document.getElementById('humidity').value),
+                    wind_speed: windSpeed,
+                    pressure: parseFloat(document.getElementById('pressure').value),
+                    hour: parseInt(document.getElementById('hour').value),
+                    month: parseInt(document.getElementById('month').value),
+                    units: currentUnits
+                };
+                
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Calculation failed');
+                }
+                
+                const result = await response.json();
+                displayResults(result);
+                
+            } catch (err) {
+                error.innerHTML = `<span>❌</span> ${err.message}`;
+                error.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        function displayResults(data) {
+            const { calculations, safety, clothing, units } = data;
+            
+            // Display calculations
+            const calculationsGrid = document.getElementById('calculationsGrid');
+            const tempUnit = units === 'imperial' ? '°F' : '°C';
+            const windUnit = units === 'imperial' ? 'mph' : 'km/h';
+            const pressureUnit = units === 'imperial' ? 'mb' : 'hPa';
+            const altUnit = units === 'imperial' ? 'ft' : 'm';
+            
+            calculationsGrid.innerHTML = `
+                <div class="result-card">
+                    <div class="result-label">Temperature</div>
+                    <div class="result-value">${calculations.temperature}${tempUnit}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Wind Chill</div>
+                    <div class="result-value">${calculations.wind_chill}${tempUnit}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Heat Index</div>
+                    <div class="result-value">${calculations.heat_index}${tempUnit}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Dew Point</div>
+                    <div class="result-value">${calculations.dew_point}${tempUnit}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Apparent Temp</div>
+                    <div class="result-value">${calculations.apparent_temperature}${tempUnit}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Humidity</div>
+                    <div class="result-value">${calculations.humidity}%</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Wind Speed</div>
+                    <div class="result-value">${calculations.wind_speed} ${windUnit}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Pressure</div>
+                    <div class="result-value">${calculations.pressure} ${pressureUnit}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Pressure Altitude</div>
+                    <div class="result-value">${calculations.pressure_altitude} ${altUnit}</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">UV Index</div>
+                    <div class="result-value">${calculations.uv_index}</div>
+                </div>
+            `;
+            
+            // Display safety alerts
+            const safetyAlerts = document.getElementById('safetyAlerts');
+            safetyAlerts.innerHTML = '';
+            
+            [
+                { type: 'wind_chill', icon: '❄️', name: 'Cold' },
+                { type: 'heat', icon: '🌡️', name: 'Heat' },
+                { type: 'uv', icon: '☀️', name: 'UV' }
+            ].forEach(({ type, icon, name }) => {
+                const alert = safety[type];
+                if (alert.level !== 'safe' || type === 'uv') {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = `safety-alert safety-${alert.level}`;
+                    alertDiv.innerHTML = `
+                        <span>${icon}</span>
+                        <div>
+                            <strong>${name} ${alert.level.toUpperCase()}</strong>: ${alert.warning}
+                            ${alert.time ? `<br><small>Time to concern: ${alert.time}</small>` : ''}
+                        </div>
+                    `;
+                    safetyAlerts.appendChild(alertDiv);
+                }
+            });
+            
+            // Display clothing advice
+            const clothingDiv = document.getElementById('clothingAdvice');
+            clothingDiv.innerHTML = `
+                <div class="clothing-advice">
+                    <div class="clothing-primary">${clothing.primary}</div>
+                    <ul class="clothing-details">
+                        ${clothing.details.map(detail => `<li>✓ ${detail}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            // Show results
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        // Initialize display values
+        document.addEventListener('DOMContentLoaded', function() {
+            ['temperature', 'humidity', 'windSpeed', 'pressure', 'hour', 'month'].forEach(id => {
+                updateValue(id, document.getElementById(id).value);
+            });
         });
 
-        return response;
-      }).catch(() => {
-        // Return a fallback response for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
+        // Register service worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/service-worker.js');
         }
-      });
-    })
-  );
-});
-
-// Activate the new service worker and clear old caches
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => {
-            console.log("Deleting old cache:", name);
-            return caches.delete(name);
-          })
-      );
-    })
-  );
-  // Ensure the new service worker takes control immediately
-  self.clients.claim();
-});
-
-// Handle background sync for future enhancements
-self.addEventListener('sync', (event) => {
-  console.log('Background sync triggered');
-});
-
-// Handle push notifications for future weather alerts
-self.addEventListener('push', (event) => {
-  if (event.data) {
-    const data = event.data.json();
-    const options = {
-      body: data.body,
-      icon: '/static/icons/icon-192.png',
-      badge: '/static/icons/icon-192.png',
-      tag: 'weather-alert'
-    };
-    
-    event.waitUntil(
-      self.registration.showNotification(data.title, options)
-    );
-  }
-});
+    </script>
+</body>
+</html>
