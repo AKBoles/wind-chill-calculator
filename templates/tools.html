@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Tools - Weather Utility Pro</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card h2 {
+            color: #2563eb;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .tool-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #dbeafe;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        .conversion-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .conversion-table th,
+        .conversion-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .conversion-table th {
+            background: #f3f4f6;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ Weather Tools</h1>
+            <p>Additional weather utilities and converters</p>
+        </div>
+
+        <div class="nav">
+            <a href="/">🌤️ Main Calculator</a>
+            <a href="/tools">🛠️ Tools</a>
+        </div>
+
+        <div class="tools-grid">
+            <!-- Unit Converters -->
+            <div class="card">
+                <h2>🌡️ Temperature Converter</h2>
+                <div class="tool-card">
+                    <div class="input-group">
+                        <label for="tempInput">Temperature</label>
+                        <input type="number" id="tempInput" placeholder="Enter temperature" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="tempFromUnit">From</label>
+                        <select id="tempFromUnit">
+                            <option value="fahrenheit">Fahrenheit (°F)</option>
+                            <option value="celsius">Celsius (°C)</option>
+                            <option value="kelvin">Kelvin (K)</option>
+                            <option value="rankine">Rankine (°R)</option>
+                        </select>
+                    </div>
+                    <button onclick="convertTemperature()">Convert</button>
+                    <div id="tempResult" class="result" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Wind Speed Converter -->
+            <div class="card">
+                <h2>💨 Wind Speed Converter</h2>
+                <div class="tool-card">
+                    <div class="input-group">
+                        <label for="windInput">Wind Speed</label>
+                        <input type="number" id="windInput" placeholder="Enter wind speed" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="windFromUnit">From</label>
+                        <select id="windFromUnit">
+                            <option value="mph">Miles per Hour (mph)</option>
+                            <option value="kmh">Kilometers per Hour (km/h)</option>
+                            <option value="ms">Meters per Second (m/s)</option>
+                            <option value="knots">Knots</option>
+                            <option value="fps">Feet per Second (ft/s)</option>
+                        </select>
+                    </div>
+                    <button onclick="convertWindSpeed()">Convert</button>
+                    <div id="windResult" class="result" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Pressure Converter -->
+            <div class="card">
+                <h2>📊 Pressure Converter</h2>
+                <div class="tool-card">
+                    <div class="input-group">
+                        <label for="pressureInput">Pressure</label>
+                        <input type="number" id="pressureInput" placeholder="Enter pressure" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="pressureFromUnit">From</label>
+                        <select id="pressureFromUnit">
+                            <option value="mb">Millibars (mb)</option>
+                            <option value="hpa">Hectopascals (hPa)</option>
+                            <option value="inhg">Inches of Mercury (inHg)</option>
+                            <option value="mmhg">Millimeters of Mercury (mmHg)</option>
+                            <option value="psi">Pounds per Square Inch (psi)</option>
+                            <option value="atm">Atmospheres (atm)</option>
+                        </select>
+                    </div>
+                    <button onclick="convertPressure()">Convert</button>
+                    <div id="pressureResult" class="result" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Visibility Calculator -->
+            <div class="card">
+                <h2>👁️ Visibility Categories</h2>
+                <div class="tool-card">
+                    <div class="input-group">
+                        <label for="visibilityInput">Visibility Distance</label>
+                        <input type="number" id="visibilityInput" placeholder="Enter distance" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="visibilityUnit">Unit</label>
+                        <select id="visibilityUnit">
+                            <option value="miles">Miles</option>
+                            <option value="km">Kilometers</option>
+                            <option value="meters">Meters</option>
+                            <option value="feet">Feet</option>
+                        </select>
+                    </div>
+                    <button onclick="calculateVisibility()">Analyze</button>
+                    <div id="visibilityResult" class="result" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Beaufort Scale -->
+            <div class="card">
+                <h2>🌊 Beaufort Wind Scale</h2>
+                <div class="tool-card">
+                    <div class="input-group">
+                        <label for="beaufortInput">Wind Speed (mph)</label>
+                        <input type="number" id="beaufortInput" placeholder="Enter wind speed" step="0.1">
+                    </div>
+                    <button onclick="calculateBeaufort()">Get Beaufort Scale</button>
+                    <div id="beaufortResult" class="result" style="display: none;"></div>
+                    
+                    <table class="conversion-table">
+                        <thead>
+                            <tr>
+                                <th>Scale</th>
+                                <th>Wind Speed (mph)</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>0</td><td>0-1</td><td>Calm</td></tr>
+                            <tr><td>1</td><td>1-3</td><td>Light air</td></tr>
+                            <tr><td>2</td><td>4-7</td><td>Light breeze</td></tr>
+                            <tr><td>3</td><td>8-12</td><td>Gentle breeze</td></tr>
+                            <tr><td>4</td><td>13-18</td><td>Moderate breeze</td></tr>
+                            <tr><td>5</td><td>19-24</td><td>Fresh breeze</td></tr>
+                            <tr><td>6</td><td>25-31</td><td>Strong breeze</td></tr>
+                            <tr><td>7</td><td>32-38</td><td>High wind</td></tr>
+                            <tr><td>8</td><td>39-46</td><td>Gale</td></tr>
+                            <tr><td>9</td><td>47-54</td><td>Strong gale</td></tr>
+                            <tr><td>10</td><td>55-63</td><td>Storm</td></tr>
+                            <tr><td>11</td><td>64-72</td><td>Violent storm</td></tr>
+                            <tr><td>12</td><td>73+</td><td>Hurricane</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cloud Base Calculator -->
+            <div class="card">
+                <h2>☁️ Cloud Base Estimator</h2>
+                <div class="tool-card">
+                    <div class="input-group">
+                        <label for="cloudTemp">Temperature (°F)</label>
+                        <input type="number" id="cloudTemp" placeholder="Current temperature" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="cloudDewPoint">Dew Point (°F)</label>
+                        <input type="number" id="cloudDewPoint" placeholder="Dew point temperature" step="0.1">
+                    </div>
+                    <button onclick="calculateCloudBase()">Calculate Cloud Base</button>
+                    <div id="cloudBaseResult" class="result" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function convertTemperature() {
+            const input = parseFloat(document.getElementById('tempInput').value);
+            const fromUnit = document.getElementById('tempFromUnit').value;
+            const result = document.getElementById('tempResult');
+            
+            if (isNaN(input)) {
+                result.innerHTML = 'Please enter a valid temperature';
+                result.style.display = 'block';
+                return;
+            }
+            
+            let celsius;
+            switch(fromUnit) {
+                case 'fahrenheit':
+                    celsius = (input - 32) * 5/9;
+                    break;
+                case 'celsius':
+                    celsius = input;
+                    break;
+                case 'kelvin':
+                    celsius = input - 273.15;
+                    break;
+                case 'rankine':
+                    celsius = (input - 491.67) * 5/9;
+                    break;
+            }
+            
+            const fahrenheit = (celsius * 9/5) + 32;
+            const kelvin = celsius + 273.15;
+            const rankine = fahrenheit + 459.67;
+            
+            result.innerHTML = `
+                <strong>Conversions:</strong><br>
+                Celsius: ${celsius.toFixed(1)}°C<br>
+                Fahrenheit: ${fahrenheit.toFixed(1)}°F<br>
+                Kelvin: ${kelvin.toFixed(1)}K<br>
+                Rankine: ${rankine.toFixed(1)}°R
+            `;
+            result.style.display = 'block';
+        }
+        
+        function convertWindSpeed() {
+            const input = parseFloat(document.getElementById('windInput').value);
+            const fromUnit = document.getElementById('windFromUnit').value;
+            const result = document.getElementById('windResult');
+            
+            if (isNaN(input)) {
+                result.innerHTML = 'Please enter a valid wind speed';
+                result.style.display = 'block';
+                return;
+            }
+            
+            // Convert to m/s first
+            let ms;
+            switch(fromUnit) {
+                case 'mph':
+                    ms = input * 0.44704;
+                    break;
+                case 'kmh':
+                    ms = input / 3.6;
+                    break;
+                case 'ms':
+                    ms = input;
+                    break;
+                case 'knots':
+                    ms = input * 0.514444;
+                    break;
+                case 'fps':
+                    ms = input * 0.3048;
+                    break;
+            }
+            
+            const mph = ms / 0.44704;
+            const kmh = ms * 3.6;
+            const knots = ms / 0.514444;
+            const fps = ms / 0.3048;
+            
+            result.innerHTML = `
+                <strong>Conversions:</strong><br>
+                mph: ${mph.toFixed(1)}<br>
+                km/h: ${kmh.toFixed(1)}<br>
+                m/s: ${ms.toFixed(1)}<br>
+                knots: ${knots.toFixed(1)}<br>
+                ft/s: ${fps.toFixed(1)}
+            `;
+            result.style.display = 'block';
+        }
+        
+        function convertPressure() {
+            const input = parseFloat(document.getElementById('pressureInput').value);
+            const fromUnit = document.getElementById('pressureFromUnit').value;
+            const result = document.getElementById('pressureResult');
+            
+            if (isNaN(input)) {
+                result.innerHTML = 'Please enter a valid pressure';
+                result.style.display = 'block';
+                return;
+            }
+            
+            // Convert to hPa first
+            let hpa;
+            switch(fromUnit) {
+                case 'mb':
+                case 'hpa':
+                    hpa = input;
+                    break;
+                case 'inhg':
+                    hpa = input * 33.8639;
+                    break;
+                case 'mmhg':
+                    hpa = input * 1.33322;
+                    break;
+                case 'psi':
+                    hpa = input * 68.9476;
+                    break;
+                case 'atm':
+                    hpa = input * 1013.25;
+                    break;
+            }
+            
+            const mb = hpa;
+            const inhg = hpa / 33.8639;
+            const mmhg = hpa / 1.33322;
+            const psi = hpa / 68.9476;
+            const atm = hpa / 1013.25;
+            
+            result.innerHTML = `
+                <strong>Conversions:</strong><br>
+                hPa/mb: ${hpa.toFixed(2)}<br>
+                inHg: ${inhg.toFixed(2)}<br>
+                mmHg: ${mmhg.toFixed(1)}<br>
+                psi: ${psi.toFixed(3)}<br>
+                atm: ${atm.toFixed(4)}
+            `;
+            result.style.display = 'block';
+        }
+        
+        function calculateVisibility() {
+            const input = parseFloat(document.getElementById('visibilityInput').value);
+            const unit = document.getElementById('visibilityUnit').value;
+            const result = document.getElementById('visibilityResult');
+            
+            if (isNaN(input)) {
+                result.innerHTML = 'Please enter a valid distance';
+                result.style.display = 'block';
+                return;
+            }
+            
+            // Convert to miles
+            let miles;
+            switch(unit) {
+                case 'miles':
+                    miles = input;
+                    break;
+                case 'km':
+                    miles = input * 0.621371;
+                    break;
+                case 'meters':
+                    miles = input * 0.000621371;
+                    break;
+                case 'feet':
+                    miles = input / 5280;
+                    break;
+            }
+            
+            let category, description, safety;
+            if (miles < 0.25) {
+                category = "Dense Fog";
+                description = "Very poor visibility";
+                safety = "Extreme caution required";
+            } else if (miles < 0.5) {
+                category = "Thick Fog";
+                description = "Poor visibility";
+                safety = "Use caution, reduce speed";
+            } else if (miles < 1) {
+                category = "Moderate Fog";
+                description = "Reduced visibility";
+                safety = "Use low beam headlights";
+            } else if (miles < 3) {
+                category = "Light Fog/Mist";
+                description = "Slightly reduced visibility";
+                safety = "Normal driving conditions";
+            } else if (miles < 6) {
+                category = "Haze";
+                description = "Good visibility";
+                safety = "Clear conditions";
+            } else {
+                category = "Clear";
+                description = "Excellent visibility";
+                safety = "Perfect conditions";
+            }
+            
+            result.innerHTML = `
+                <strong>Visibility Analysis:</strong><br>
+                Category: ${category}<br>
+                Description: ${description}<br>
+                Safety: ${safety}
+            `;
+            result.style.display = 'block';
+        }
+        
+        function calculateBeaufort() {
+            const input = parseFloat(document.getElementById('beaufortInput').value);
+            const result = document.getElementById('beaufortResult');
+            
+            if (isNaN(input)) {
+                result.innerHTML = 'Please enter a valid wind speed';
+                result.style.display = 'block';
+                return;
+            }
+            
+            let scale, description, conditions;
+            if (input <= 1) {
+                scale = 0; description = "Calm"; conditions = "Smoke rises vertically";
+            } else if (input <= 3) {
+                scale = 1; description = "Light air"; conditions = "Smoke drift indicates wind direction";
+            } else if (input <= 7) {
+                scale = 2; description = "Light breeze"; conditions = "Leaves rustle, wind felt on face";
+            } else if (input <= 12) {
+                scale = 3; description = "Gentle breeze"; conditions = "Leaves and small twigs in motion";
+            } else if (input <= 18) {
+                scale = 4; description = "Moderate breeze"; conditions = "Small branches move, dust raised";
+            } else if (input <= 24) {
+                scale = 5; description = "Fresh breeze"; conditions = "Small trees sway";
+            } else if (input <= 31) {
+                scale = 6; description = "Strong breeze"; conditions = "Large branches move, whistling in wires";
+            } else if (input <= 38) {
+                scale = 7; description = "High wind"; conditions = "Whole trees in motion";
+            } else if (input <= 46) {
+                scale = 8; description = "Gale"; conditions = "Twigs break off trees";
+            } else if (input <= 54) {
+                scale = 9; description = "Strong gale"; conditions = "Slight structural damage";
+            } else if (input <= 63) {
+                scale = 10; description = "Storm"; conditions = "Trees uprooted, considerable damage";
+            } else if (input <= 72) {
+                scale = 11; description = "Violent storm"; conditions = "Widespread damage";
+            } else {
+                scale = 12; description = "Hurricane"; conditions = "Devastating damage";
+            }
+            
+            result.innerHTML = `
+                <strong>Beaufort Scale ${scale}:</strong><br>
+                Description: ${description}<br>
+                Conditions: ${conditions}
+            `;
+            result.style.display = 'block';
+        }
+        
+        function calculateCloudBase() {
+            const temp = parseFloat(document.getElementById('cloudTemp').value);
+            const dewPoint = parseFloat(document.getElementById('cloudDewPoint').value);
+            const result = document.getElementById('cloudBaseResult');
+            
+            if (isNaN(temp) || isNaN(dewPoint)) {
+                result.innerHTML = 'Please enter valid temperatures';
+                result.style.display = 'block';
+                return;
+            }
+            
+            if (temp < dewPoint) {
+                result.innerHTML = 'Temperature cannot be lower than dew point';
+                result.style.display = 'block';
+                return;
+            }
+            
+            // Cloud base height using standard lapse rate
+            const cloudBaseFeet = (temp - dewPoint) * 400; // Approximate formula
+            const cloudBaseMeters = cloudBaseFeet * 0.3048;
+            
+            let description;
+            if (cloudBaseFeet < 500) {
+                description = "Very low clouds - fog likely";
+            } else if (cloudBaseFeet < 2000) {
+                description = "Low clouds - stratocumulus";
+            } else if (cloudBaseFeet < 6500) {
+                description = "Mid-level clouds - altocumulus";
+            } else if (cloudBaseFeet < 20000) {
+                description = "High clouds - cirrus";
+            } else {
+                description = "Very high or no clouds";
+            }
+            
+            result.innerHTML = `
+                <strong>Estimated Cloud Base:</strong><br>
+                Height: ${cloudBaseFeet.toFixed(0)} feet (${cloudBaseMeters.toFixed(0)} meters)<br>
+                Type: ${description}
+            `;
+            result.style.display = 'block';
+        }
+        
+        // Register service worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/service-worker.js');
+        }
+    </script>
+</body>
+</html>
