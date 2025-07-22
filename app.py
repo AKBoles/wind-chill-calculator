@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import math
 from datetime import datetime, timedelta
 
-app = Flask(__name__)
+# Create Flask app with explicit static folder configuration
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 class WeatherCalculator:
     """Comprehensive weather calculation utilities that work offline"""
@@ -210,12 +211,29 @@ class ClothingAdvisor:
                 ]
             }
 
-@app.route("/")
-def index():
+# ============================================================================
+# ROUTES - Explicit and clean route definitions
+# ============================================================================
+
+@app.route("/", methods=["GET"])
+def home():
+    """Main weather calculator page - EXPLICIT GET route"""
     return render_template("index.html")
+
+@app.route("/index")
+@app.route("/index.html")
+def index_alt():
+    """Alternative routes to main page"""
+    return render_template("index.html")
+
+@app.route("/tools", methods=["GET"])
+def tools():
+    """Additional weather tools page"""
+    return render_template("tools.html")
 
 @app.route("/calculate", methods=["POST"])
 def calculate():
+    """Weather calculation API endpoint"""
     try:
         data = request.get_json()
         
@@ -304,9 +322,11 @@ def calculate():
     except (ValueError, KeyError) as e:
         return jsonify({'error': 'Invalid input data'}), 400
 
-@app.route("/tools")
-def tools():
-    return render_template("tools.html")
+# Health check endpoint for deployment
+@app.route("/health")
+def health_check():
+    """Health check endpoint"""
+    return jsonify({"status": "healthy", "app": "Weather Utility Pro"})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)
