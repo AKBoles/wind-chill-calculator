@@ -263,7 +263,6 @@ def calculate():
         heat_index_f = calc.heat_index(temp_f, humidity)
         dew_point_f = calc.dew_point(temp_f, humidity)
         apparent_temp_f = calc.apparent_temperature(temp_f, humidity, wind_mph)
-        pressure_alt_ft = calc.pressure_altitude(pressure_mb)
         uv_index = calc.uv_index_estimate(hour, month)
         
         # Prepare output values based on units
@@ -274,8 +273,6 @@ def calculate():
             output_dew_point = round((dew_point_f - 32) * 5/9, 1)
             output_apparent_temp = round((apparent_temp_f - 32) * 5/9, 1)
             output_wind_speed = round(wind_speed, 1)  # Already in km/h
-            output_pressure = pressure_mb
-            output_pressure_alt = round(pressure_alt_ft * 0.3048, 0)
         else:
             output_temp = round(temp_f, 1)
             output_wind_chill = round(wind_chill_f, 1)
@@ -283,8 +280,6 @@ def calculate():
             output_dew_point = round(dew_point_f, 1)
             output_apparent_temp = round(apparent_temp_f, 1)
             output_wind_speed = round(wind_speed, 1)  # Already in mph
-            output_pressure = pressure_mb
-            output_pressure_alt = round(pressure_alt_ft, 0)
         
         # Safety assessments
         wind_chill_safety = safety.wind_chill_safety(wind_chill_f)
@@ -304,8 +299,6 @@ def calculate():
                 'apparent_temperature': output_apparent_temp,
                 'wind_speed': output_wind_speed,
                 'humidity': humidity,
-                'pressure': output_pressure,
-                'pressure_altitude': output_pressure_alt,
                 'uv_index': uv_index
             },
             'safety': {
