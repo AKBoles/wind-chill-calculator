@@ -1,160 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wind Chill Calculator</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      text-align: center; 
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f4f4f4;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-      width: 320px;
-    }
-    h2 { margin-bottom: 15px; }
-    form { display: flex; flex-direction: column; align-items: center; }
-    label { font-size: 14px; font-weight: bold; margin: 10px 0 5px; }
-    input[type="range"] { width: 100%; }
-    button {
-      padding: 12px;
-      width: 100%;
-      background-color: #4676a3;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-      margin-top: 10px;
-    }
-    button:hover { background-color: #365a82; }
-    .clear-btn { background-color: #b0b0b0; }
-    .clear-btn:hover { background-color: #888888; }
-    p { font-size: 18px; font-weight: bold; margin-top: 10px; color: #333; }
-    @media (max-width: 500px) { .container { width: 90%; padding: 15px; } }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Wind Chill Calculator</h2>
-    <form method="POST">
-      <label>Temperature (°F): <span id="tempValue">{{ input_temperature }}</span></label>
-      <input type="range" name="temperature" min="-50" max="100" value="{{ input_temperature }}" 
-             oninput="document.getElementById('tempValue').innerText = this.value">
-      <label>Wind Speed (mph): <span id="windValue">{{ input_wind_speed }}</span></label>
-      <input type="range" name="wind_speed" min="0" max="60" value="{{ input_wind_speed }}" 
-             oninput="document.getElementById('windValue').innerText = this.value">
-      <button type="submit">Calculate</button>
-      <button type="button" class="clear-btn" onclick="clearFields()">Clear</button>
-    </form>
+const CACHE_NAME = "weather-utility-pro-v2";
+const urlsToCache = [
+  "/",
+  "/static/manifest.json",
+  "/static/service-worker.js",
+  "/static/icons/icon-192.png",
+  "/static/icons/icon-512.png"
+];
 
-    {% if wind_chill_f is not none %}
-      <p id="result">Wind Chill: {{ wind_chill_f }}°F</p>
-      <p id="frostbite-warning" style="font-weight: bold; color: red;">{{ frostbite_warning }}</p>
-      <p id="frostbite-time" style="font-weight: bold; color: black;">{{ frostbite_time }}</p>
-      <p id="clothing-advice" style="font-weight: bold;">{{ clothing_advice }}</p>
-      <button onclick="toggleUnits()">Switch to °C</button>
-      <p id="converted-temp"></p>
-    {% endif %}
-  </div>
+// Install the service worker and cache resources
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log("Caching app shell");
+      return cache.addAll(urlsToCache);
+    })
+  );
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
+});
 
-  <script>
-    // Clear input fields and result displays, resetting to defaults (32°F and 5 mph)
-    function clearFields() {
-      document.querySelector('input[name="temperature"]').value = 32;
-      document.querySelector('input[name="wind_speed"]').value = 5;
-      document.getElementById('tempValue').innerText = "32";
-      document.getElementById('windValue').innerText = "5";
-      
-      let result = document.getElementById("result");
-      if (result) result.innerText = "";
-      
-      let frostbiteWarning = document.getElementById("frostbite-warning");
-      if (frostbiteWarning) frostbiteWarning.style.display = "none";
-      
-      let frostbiteTime = document.getElementById("frostbite-time");
-      if (frostbiteTime) frostbiteTime.style.display = "none";
-      
-      let clothingAdvice = document.getElementById("clothing-advice");
-      if (clothingAdvice) clothingAdvice.style.display = "none";
-      
-      let convertedTemp = document.getElementById("converted-temp");
-      if (convertedTemp) convertedTemp.innerText = "";
-    }
-    
-    // Toggle between Fahrenheit and Celsius
-    let isFahrenheit = true;
-    function toggleUnits() {
-      let resultText = document.getElementById("result").innerText;
-      let windChillValue = parseFloat(resultText.split(":")[1]);
-      if (isFahrenheit) {
-        let converted = ((windChillValue - 32) * 5/9).toFixed(2);
-        document.getElementById("converted-temp").innerText = `🌡 Wind Chill: ${converted}°C`;
-        isFahrenheit = false;
-      } else {
-        document.getElementById("converted-temp").innerText = "";
-        isFahrenheit = true;
+// Fetch files from the cache first, then network
+self.addEventListener("fetch", (event) => {
+  // Skip cross-origin requests
+  if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      // Return cached version or fetch from network
+      if (response) {
+        return response;
       }
-    }
+      
+      return fetch(event.request).then((response) => {
+        // Don't cache non-successful responses
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+
+        // Clone the response as it can only be consumed once
+        const responseToCache = response.clone();
+
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return response;
+      }).catch(() => {
+        // Return a fallback response for navigation requests
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
+        }
+      });
+    })
+  );
+});
+
+// Activate the new service worker and clear old caches
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => {
+            console.log("Deleting old cache:", name);
+            return caches.delete(name);
+          })
+      );
+    })
+  );
+  // Ensure the new service worker takes control immediately
+  self.clients.claim();
+});
+
+// Handle background sync for future enhancements
+self.addEventListener('sync', (event) => {
+  console.log('Background sync triggered');
+});
+
+// Handle push notifications for future weather alerts
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    const data = event.data.json();
+    const options = {
+      body: data.body,
+      icon: '/static/icons/icon-192.png',
+      badge: '/static/icons/icon-192.png',
+      tag: 'weather-alert'
+    };
     
-    // Frostbite timer functions
-    let frostbiteInterval;
-    function startFrostbiteTimer(minutes) {
-      let timeRemaining = minutes * 60;
-      let timerElement = document.getElementById("frostbite-timer");
-      if (!timerElement) {
-        timerElement = document.createElement("p");
-        timerElement.id = "frostbite-timer";
-        timerElement.style.fontSize = "20px";
-        timerElement.style.fontWeight = "bold";
-        timerElement.style.color = "red";
-        document.querySelector('.container').appendChild(timerElement);
-      }
-      clearInterval(frostbiteInterval);
-      timerElement.style.display = "block";
-      frostbiteInterval = setInterval(() => {
-        let minutesLeft = Math.floor(timeRemaining / 60);
-        let secondsLeft = timeRemaining % 60;
-        timerElement.innerText = `🕒 Time to frostbite: ${minutesLeft} min ${secondsLeft} sec`;
-        if (timeRemaining <= 0) {
-          clearInterval(frostbiteInterval);
-          timerElement.innerText = "⚠️ Frostbite may have already started!";
-        }
-        timeRemaining--;
-      }, 1000);
-    }
-    
-    // On page load, if wind chill result is present, start the frostbite timer if applicable.
-    document.addEventListener("DOMContentLoaded", function() {
-      {% if wind_chill_f is not none and wind_chill_f is number %}
-        let windChill = {{ wind_chill_f }};
-        let timerMinutes = 0;
-        if (windChill <= -40) {
-          timerMinutes = 5;
-        } else if (windChill <= -20) {
-          timerMinutes = 15;
-        } else if (windChill <= -10) {
-          timerMinutes = 30;
-        } else if (windChill <= 0) {
-          timerMinutes = 60;
-        }
-        if (timerMinutes > 0) {
-          startFrostbiteTimer(timerMinutes);
-        }
-      {% endif %}
-    });
-  </script>
-</body>
-</html>
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+  }
+});
