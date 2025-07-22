@@ -332,14 +332,7 @@
                            oninput="updateValue('windSpeed', this.value)">
                 </div>
 
-                <div class="input-group">
-                    <label>
-                        Pressure
-                        <span class="value-display" id="pressureValue">1013 mb</span>
-                    </label>
-                    <input type="range" id="pressure" min="950" max="1050" value="1013" 
-                           oninput="updateValue('pressure', this.value)">
-                </div>
+
 
                 <div class="input-group">
                     <label>
@@ -416,7 +409,6 @@
                 'temperature': () => `${value}°${currentUnits === 'imperial' ? 'F' : 'C'}`,
                 'humidity': () => `${value}%`,
                 'windSpeed': () => `${value} ${currentUnits === 'imperial' ? 'mph' : 'km/h'}`,
-                'pressure': () => `${value} ${currentUnits === 'imperial' ? 'mb' : 'hPa'}`,
                 'hour': () => value,
                 'month': () => months[parseInt(value) - 1]
             };
@@ -469,7 +461,6 @@
             // Update all display values
             updateValue('temperature', tempSlider.value);
             updateValue('windSpeed', windSlider.value);
-            updateValue('pressure', document.getElementById('pressure').value);
         }
 
         function clearInputs() {
@@ -482,12 +473,11 @@
             }
             
             document.getElementById('humidity').value = 50;
-            document.getElementById('pressure').value = 1013;
             document.getElementById('hour').value = 12;
             document.getElementById('month').value = 6;
             
             // Update all displays
-            ['temperature', 'humidity', 'windSpeed', 'pressure', 'hour', 'month'].forEach(id => {
+            ['temperature', 'humidity', 'windSpeed', 'hour', 'month'].forEach(id => {
                 updateValue(id, document.getElementById(id).value);
             });
             
@@ -525,7 +515,7 @@
                     temperature: temperature,
                     humidity: parseFloat(document.getElementById('humidity').value),
                     wind_speed: windSpeed,
-                    pressure: parseFloat(document.getElementById('pressure').value),
+                    pressure: 1013.25, // Standard atmospheric pressure
                     hour: parseInt(document.getElementById('hour').value),
                     month: parseInt(document.getElementById('month').value),
                     units: currentUnits
@@ -561,7 +551,6 @@
             const calculationsGrid = document.getElementById('calculationsGrid');
             const tempUnit = units === 'imperial' ? '°F' : '°C';
             const windUnit = units === 'imperial' ? 'mph' : 'km/h';
-            const pressureUnit = units === 'imperial' ? 'mb' : 'hPa';
             const altUnit = units === 'imperial' ? 'ft' : 'm';
             
             calculationsGrid.innerHTML = `
@@ -592,14 +581,6 @@
                 <div class="result-card">
                     <div class="result-label">Wind Speed</div>
                     <div class="result-value">${calculations.wind_speed} ${windUnit}</div>
-                </div>
-                <div class="result-card">
-                    <div class="result-label">Pressure</div>
-                    <div class="result-value">${calculations.pressure} ${pressureUnit}</div>
-                </div>
-                <div class="result-card">
-                    <div class="result-label">Pressure Altitude</div>
-                    <div class="result-value">${calculations.pressure_altitude} ${altUnit}</div>
                 </div>
                 <div class="result-card">
                     <div class="result-label">UV Index</div>
@@ -648,14 +629,20 @@
 
         // Initialize display values
         document.addEventListener('DOMContentLoaded', function() {
-            ['temperature', 'humidity', 'windSpeed', 'pressure', 'hour', 'month'].forEach(id => {
+            ['temperature', 'humidity', 'windSpeed', 'hour', 'month'].forEach(id => {
                 updateValue(id, document.getElementById(id).value);
             });
         });
 
         // Register service worker for offline functionality
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/service-worker.js');
+            navigator.serviceWorker.register('/static/service-worker.js')
+                .then(function(registration) {
+                    console.log('Service Worker registered successfully:', registration.scope);
+                })
+                .catch(function(error) {
+                    console.log('Service Worker registration failed:', error);
+                });
         }
     </script>
 </body>
