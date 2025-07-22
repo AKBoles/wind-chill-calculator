@@ -1,21 +1,39 @@
 {
-  "name": "Wind Chill Calculator",
-  "short_name": "WindChill",
+  "name": "Weather Utility Pro",
+  "short_name": "WeatherPro",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f4f4f4",
-  "theme_color": "#4676a3",
-  "description": "Calculate Wind Chill with ease!",
+  "background_color": "#667eea",
+  "theme_color": "#2563eb",
+  "description": "Comprehensive offline weather calculations, safety alerts, and clothing recommendations",
+  "orientation": "portrait-primary",
+  "categories": ["weather", "utilities", "lifestyle"],
   "icons": [
     {
       "src": "/static/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/static/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/icons/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/static/icons/screenshot-narrow.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ]
 }
